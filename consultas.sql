@@ -29,6 +29,54 @@ WHERE [Compra en Juego] > 0;
 
 
 
-
-
 --Clase dia Martes 14/10/2025
+--FUNCIONES ESCALARES
+-- Genero de los jugadores en mayuscula
+SELECT 
+    [ID de Jugador],
+    UPPER([Género]) AS GeneroEnMayuscula
+FROM ComportamientoOnlineDatos;
+
+--Cuantos caracteres tiene el genero de juego
+SELECT 
+    [Género de Juego],
+    LEN([Género de Juego]) AS LargoDelTexto
+FROM ComportamientoOnlineDatos;
+
+-- Redondear la duración de sesión en horas a un decimal
+SELECT 
+    [ID de Jugador],
+    ROUND([Duración de Sesión en Horas en Promedio], 1) AS DuracionRedondeada
+FROM ComportamientoOnlineDatos;
+
+--FUNCIONES DE AGREGACION
+-- Promedio de edad de los jugadores
+SELECT 
+    AVG([Edad]) AS PromedioEdad
+FROM ComportamientoOnlineDatos;
+
+-- Edad máxima y mínima de los jugadores
+SELECT 
+    MAX([Edad]) AS EdadMaxima,
+    MIN([Edad]) AS EdadMinima       
+FROM ComportamientoOnlineDatos;
+-- Nivel máximo de jugador
+SELECT 
+    MAX([Nivel de Jugador]) AS NivelMaximo
+FROM ComportamientoOnlineDatos;
+
+-- Suma total de compras en juego
+SELECT 
+    SUM([Compra en Juego]) AS TotalComprasEnJuego
+FROM ComportamientoOnlineDatos;
+
+-- Promedio de duración de sesión en horas por nivel de enganche mayor a 3 horas
+SELECT 
+    [Nivel de Enganche],
+    AVG([Duración de Sesión en Horas en Promedio]) AS PromedioHoras
+FROM ComportamientoOnlineDatos
+GROUP BY [Nivel de Enganche]
+HAVING AVG([Duración de Sesión en Horas en Promedio]) > 3;
+
+
+--Clase dia Jueves 16/10/2025
