@@ -13,7 +13,7 @@ Propósito:
 ## Columnas propuestas
 
 - `ID_de_Jugador` (INT, PK) — Identificador único del jugador.
-	- Recomendación: usar surrogate key (INT IDENTITY) si no hay un identificador natural estable.
+  - Recomendación: usar surrogate key (INT IDENTITY) si no hay un identificador natural estable.
 
 - `Jugador_UUID` (UNIQUEIDENTIFIER, NULLABLE) — UUID opcional si existe identificación distribuida.
 
@@ -49,13 +49,13 @@ Propósito:
 
 - Clave primaria: `ID_de_Jugador`.
 - Índices recomendados:
-	- Índice único en `Email_Hash` si se usa para identificar usuarios (evita duplicados).
-	- Índice en `Segmento` y `Nivel` para consultas rápidas de segmentación.
-	- Índice en `Pais` para análisis geográfico.
+  - Índice único en `Email_Hash` si se usa para identificar usuarios (evita duplicados).
+  - Índice en `Segmento` y `Nivel` para consultas rápidas de segmentación.
+  - Índice en `Pais` para análisis geográfico.
 
 ## Manejo de cambios (SCD)
 - Tipo recomendado: SCD tipo 2 para atributos críticos que cambian (por ejemplo, `Segmento`, `Pais`, `Nivel`) si necesitas mantener el histórico.
-	- Alternativa: SCD tipo 1 (sobrescribir) para atributos no críticos.
+  - Alternativa: SCD tipo 1 (sobrescribir) para atributos no críticos.
 - Si se implementa SCD2, agregar columnas: `Fecha_Vigencia_Inicio`, `Fecha_Vigencia_Fin`, `Is_Current`.
 
 ## Calidad de datos y validaciones
@@ -108,5 +108,3 @@ HAVING COUNT(*) > 1;
 - Validar contra DDL real y el pipeline de ingestión. Puedo generar un DDL sugerido o buscar el DDL real en `Scripts/DDL Tablas`.
 
 ---
-
-

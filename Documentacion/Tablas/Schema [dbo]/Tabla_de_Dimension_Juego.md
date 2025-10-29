@@ -13,46 +13,30 @@ Propósito:
 ## Columnas propuestas
 
 - `ID_de_Juego` (INT, PK) — Identificador único del juego.
-
 - `Nombre_Juego` (VARCHAR(200)) — Nombre legible del juego.
-
 - `ID_Genero` (INT, FK -> Clasificacion_Genero_Juegos.ID_de_Juego) — FK al catálogo de géneros.
-
 - `Genero_Nombre` (VARCHAR(100)) — Nombre del género (duplicado para rapidez si se prefiere denormalizar).
-
 - `Categoria` (VARCHAR(100)) — Categoría o subgénero (p. ej. estrategia, simulación, acción).
-
 - `Plataforma` (VARCHAR(50)) — Plataforma principal (PC, iOS, Android, Consola).
-
 - `Desarrollador` (VARCHAR(200), NULLABLE) — Empresa/desarrollador.
-
 - `Editor` (VARCHAR(200), NULLABLE) — Editor/publicador.
-
 - `Fecha_Lanzamiento` (DATE, NULLABLE) — Fecha de lanzamiento.
-
 - `Edad_Recomendada` (VARCHAR(50), NULLABLE) — Clasificación por edad (p.ej. PEGI, ESRB).
-
 - `Monetizacion_Tipo` (VARCHAR(50)) — Modelo de monetización (Free-to-play, Paga, Freemium, Subscripción).
-
 - `Precio` (DECIMAL(10,2), NULLABLE) — Precio si aplica.
-
 - `Estado_Juego` (VARCHAR(50)) — Estado (activo, retirado, en_desarrollo).
-
 - `Tags` (VARCHAR(500), NULLABLE) — Etiquetas separadas por comas (para búsqueda/filtro rápido).
-
 - `Fecha_Creacion` (DATETIME) — Fecha de creación del registro en la dimensión.
-
 - `Fecha_Actualizacion` (DATETIME) — Última modificación del registro.
-
 - `Fuente` (VARCHAR(100)) — Origen del dato (manual, API, sync_catalogo).
 
 ## Claves e índices sugeridos
 
 - Clave primaria: `ID_de_Juego`.
 - Índices recomendados:
-	- Índice en `ID_Genero` para joins y agregaciones por género.
-	- Índice en `Nombre_Juego` para búsquedas rápidas (puede ser índice con full-text si el SGBD lo soporta).
-	- Índice en `Plataforma` y `Monetizacion_Tipo` para segmentación.
+  - Índice en `ID_Genero` para joins y agregaciones por género.
+  - Índice en `Nombre_Juego` para búsquedas rápidas (puede ser índice con full-text si el SGBD lo soporta).
+  - Índice en `Plataforma` y `Monetizacion_Tipo` para segmentación.
 
 ## Manejo de cambios
 - Dimensión relativamente estática; SCD tipo 1 suele ser suficiente (sobrescribir atributos). Si necesitas histórico por cambios de metadatos importantes (p. ej., cambio de editor), considerar SCD tipo 2 con columnas de vigencia.
@@ -101,7 +85,3 @@ WHERE Estado_Juego = 'activo' AND Monetizacion_Tipo = 'Freemium';
 ## Enlaces y siguientes pasos
 - Enlazar desde `TABLAS.md` y `DICCIONARIO_DATOS.md` a este archivo.
 - Validar contra DDL real en `Scripts/DDL Tablas`. Puedo generar un `CREATE TABLE` sugerido o sincronizar con el DDL real si lo prefieres.
-
----
-
-
