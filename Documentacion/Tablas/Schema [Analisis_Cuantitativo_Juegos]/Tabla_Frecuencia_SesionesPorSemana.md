@@ -1,34 +1,108 @@
 # Tabla_Frecuencia_SesionesPorSemana
 
 ## Resumen
-Tabla de frecuencias para la variable "Sesiones por semana". Está pensada para guardar clases (intervalos), marcas de clase y las medidas derivadas necesarias para tablas de frecuencia (frecuencia absoluta, acumulada, relativa y porcentual) y poder actualizarse periódicamente.
+Tabla de frecuencias para la variable "Sesiones por semana". Almacena la distribución del número de sesiones de juego por semana de los usuarios, permitiendo analizar patrones de engagement y actividad.
 
-Esta documentación cubre:
-- DDL original (comentarios y correcciones necesarias)
-- Descripción de columnas
-- Procedimiento recomendado para poblar/actualizar la tabla desde la fuente (p.ej. `dbo.Tabla_Madre` o `Tabla_de_Hechos_Comportamiento`)
-- Ejemplos SQL de cálculo de frecuencias, acumulados y porcentajes
-- Notas de mantenimiento y buenas prácticas
+## Estructura
+| Columna | Tipo | Nullable | Default | Descripción |
+|---------|------|----------|----------|-------------|
+| Intervalo | INT | NO | IDENTITY(1,1) | Identificador secuencial de la clase |
+| Limite_Inferior | DECIMAL(6,3) | SI | NULL | Límite inferior del intervalo |
+| Limite_Superior | DECIMAL(6,3) | SI | NULL | Límite superior del intervalo |
+| Marca_Clase | DECIMAL(6,3) | SI | NULL | Punto medio del intervalo |
+| Frecuencia | INT | NO | - | Número de observaciones en la clase |
+| Frecuencia_Acumulada | INT | SI | NULL | Suma acumulada de frecuencias |
+| Frecuencia_Relativa | DECIMAL(6,6) | SI | NULL | Frecuencia / Total (0 a 1) |
+| Frecuencia_Relativa_Acumulada | DECIMAL(6,6) | SI | NULL | Suma acumulada de frecuencias relativas |
+| Frecuencia_Porcentual | DECIMAL(6,3) | SI | NULL | Frecuencia relativa * 100 |
+| Frecuencia_Porcentual_Acumulada | DECIMAL(6,3) | SI | NULL | Acumulado porcentual |
 
-## DDL (origen + correcciones)
-DDL extraído de `Scripts/.../Tabla_Frecuencia_SesionesPorSemana.sql` (se presentan correcciones menores):
+## Claves
+- **Clave Primaria**: `Intervalo` (INT IDENTITY)
+- **Claves Foráneas**: No aplica (tabla de análisis estadístico)
+
+## Índices
+1. **PK_Tabla_Frecuencia_SesionesPorSemana** (clustered)
+   - Columnas: (`Intervalo`)
+   - Tipo: CLUSTERED
+   - Unicidad: UNIQUE
+
+2. **IX_Frecuencia_Sesiones_Marca**
+   - Columnas: (`Marca_Clase`) INCLUDE (`Frecuencia`, `Frecuencia_Acumulada`)
+   - Tipo: NONCLUSTERED
+   - Utilidad: Optimizar consultas de distribución y percentiles
+
+3. **IX_Frecuencia_Sesiones_Fecha**
+   - Columnas: (`Frecuencia_Relativa`) INCLUDE (`Frecuencia_Porcentual`)
+   - Tipo: NONCLUSTERED
+   - Utilidad: Análisis de distribución y reportes
+
+## Objetos relacionados
+
+### Tablas fuente
+- `[dbo].[Tabla_Madre]` - Fuente principal de datos de sesiones
+- `[dbo].[Tabla_de_Hechos_Comportamiento]` - Hechos detallados de comportamiento
+
+### Vistas
+- `[Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaSesiones]` - Vista para reporting
+- `[Analisis_Cuantitativo_Juegos].[VW_EngagementSemanal]` - Vista de análisis de actividad
+- `[Analisis_Cuantitativo_Juegos].[VW_PatronesJuego]` - Vista consolidada de comportamiento
+
+### Procedimientos almacenados
+- `[dbo].[sp_ActualizarTablasFrecuencia]` - SP para actualizar todas las tablas de frecuencia
+- `[dbo].[sp_CalcularFrecuenciasSesiones]` - SP específico para sesiones semanales
+
+## Seguridad y clasificación
+
+### Clasificación de datos
+- **Nivel de sensibilidad**: BAJO
+- **Tipo de datos**: Estadísticas agregadas de comportamiento
+- **Retención**: 12 meses (rotación anual de datos históricos)
+
+### Permisos requeridos
+- SELECT: roles `data_analyst`, `bi_reader`, `marketing_analyst`
+- INSERT/UPDATE: rol `etl_runner`
+- TRUNCATE/DELETE: rol `db_owner` (operación restringida)
+
+### Notas de seguridad
+- No contiene datos personales identificables (PII)
+- Los datos agregados protegen la privacidad individual
+- Mantener registro de actualizaciones masivas en tabla de auditoría
+- Considerar enmascaramiento de datos para ambientes no productivos
+
+## DDL y notas de implementación
 
 ```sql
--- Versión corregida y recomendada
 CREATE TABLE [Analisis_Cuantitativo_Juegos].[Tabla_Frecuencia_SesionesPorSemana] (
-		Intervalo INT PRIMARY KEY IDENTITY (1,1) NOT NULL,
-		Limite_Inferior DECIMAL(6,3) NULL,
-		Limite_Superior DECIMAL(6,3) NULL,
-		Marca_Clase DECIMAL(6,3) NULL,
-		Frecuencia INT NOT NULL,
-		Frecuencia_Acumulada INT NULL,
-		Frecuencia_Relativa DECIMAL(6,6) NULL,
-		Frecuencia_Relativa_Acumulada DECIMAL(6,6) NULL,
-		Frecuencia_Porcentual DECIMAL(6,3) NULL,
-		Frecuencia_Porcentual_Acumulada DECIMAL(6,3) NULL
+    Intervalo INT PRIMARY KEY IDENTITY(1,1) NOT NULL,
+    Limite_Inferior DECIMAL(6,3) NULL,
+    Limite_Superior DECIMAL(6,3) NULL,
+    Marca_Clase DECIMAL(6,3) NULL,
+    Frecuencia INT NOT NULL,
+    Frecuencia_Acumulada INT NULL,
+    Frecuencia_Relativa DECIMAL(6,6) NULL,
+    Frecuencia_Relativa_Acumulada DECIMAL(6,6) NULL,
+    Frecuencia_Porcentual DECIMAL(6,3) NULL,
+    Frecuencia_Porcentual_Acumulada DECIMAL(6,3) NULL,
+    CONSTRAINT CHK_Limites_Sesiones CHECK (Limite_Superior > Limite_Inferior),
+    CONSTRAINT CHK_Frecuencias_Sesiones_Positivas CHECK (Frecuencia >= 0),
+    CONSTRAINT CHK_Porcentajes_Sesiones_Validos CHECK (Frecuencia_Porcentual BETWEEN 0 AND 100)
 );
-GO
+
+CREATE NONCLUSTERED INDEX IX_Frecuencia_Sesiones_Marca 
+ON [Analisis_Cuantitativo_Juegos].[Tabla_Frecuencia_SesionesPorSemana](Marca_Clase)
+INCLUDE (Frecuencia, Frecuencia_Acumulada);
+
+CREATE NONCLUSTERED INDEX IX_Frecuencia_Sesiones_Fecha 
+ON [Analisis_Cuantitativo_Juegos].[Tabla_Frecuencia_SesionesPorSemana](Frecuencia_Relativa)
+INCLUDE (Frecuencia_Porcentual);
 ```
+
+### Notas de implementación
+- Se utiliza precisión de 3 decimales para valores de sesiones
+- Frecuencias relativas con 6 decimales para cálculos precisos
+- Constraints garantizan integridad de datos y valores válidos
+- Índices optimizan consultas frecuentes de reporting
 
 Notas sobre la corrección:
 - El DDL original incluía una coma final antes del paréntesis de cierre; esto produce error de sintaxis en la mayoría de SGBD. La versión anterior la elimina.

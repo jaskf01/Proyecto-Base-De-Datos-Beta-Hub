@@ -151,7 +151,4 @@ Checklist antes de ejecutar en producción
 Notas finales
 - Este documento propone una implementación práctica y segura. Puedo generar el `pivot_table_app.py` de ejemplo dentro de `Scripts/SCRIPTS APPS/` con la lógica mostrada arriba (¿quieres que lo cree?), y un `requirements.txt` minimal.
 
-Contacto / mantenimiento
-- Responsable: Equipo de análisis cuantitativo / Data Engineering.
-- Archivo mantenido en: `Documentacion/DOCUMENTACION APPS/pivot_table_app.md` dentro del repo.
 

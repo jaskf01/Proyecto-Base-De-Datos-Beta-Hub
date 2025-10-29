@@ -1,6 +1,99 @@
 # Tabla_Frecuencia_DuracionSesionHoras
 
 ## Resumen
+Tabla que almacena la distribución de frecuencias de la duración de las sesiones de juego en horas. Esta tabla permite analizar patrones de tiempo de juego y es fundamental para entender el comportamiento de los usuarios.
+
+Propósito:
+- Agrupar las duraciones de sesión en intervalos significativos
+- Calcular frecuencias absolutas y relativas para análisis estadístico
+- Servir como base para visualizaciones de distribución y reportes de engagement
+
+## Estructura
+| Columna | Tipo | Nullable | Default | Descripción |
+|---------|------|----------|----------|-------------|
+| ID_Rango | INT | NO | - | Identificador único del rango de duración |
+| Limite_Inferior | DECIMAL(5,2) | NO | - | Valor mínimo del intervalo en horas |
+| Limite_Superior | DECIMAL(5,2) | NO | - | Valor máximo del intervalo en horas |
+| Frecuencia_Absoluta | INT | NO | 0 | Cantidad de sesiones en este rango |
+| Frecuencia_Relativa | DECIMAL(5,4) | NO | 0 | Proporción sobre el total (entre 0 y 1) |
+| Frecuencia_Acumulada | INT | NO | 0 | Suma acumulada de frecuencias hasta este rango |
+| Porcentaje_Acumulado | DECIMAL(5,4) | NO | 0 | Porcentaje acumulado hasta este rango |
+| Fecha_Actualizacion | DATETIME | NO | GETDATE() | Timestamp de último cálculo |
+
+## Claves
+- **Clave Primaria**: `ID_Rango`
+- **Claves Foráneas**: No aplica (tabla de análisis estadístico)
+
+## Índices
+1. **PK_Tabla_Frecuencia_DuracionSesionHoras** (clustered)
+   - Columnas: (`ID_Rango`)
+   - Tipo: CLUSTERED
+   - Unicidad: UNIQUE
+
+2. **IX_Frecuencia_Limites**
+   - Columnas: (`Limite_Inferior`, `Limite_Superior`)
+   - Tipo: NONCLUSTERED
+   - Utilidad: Búsquedas por rangos de duración
+
+3. **IX_Frecuencia_Actualizacion**
+   - Columnas: (`Fecha_Actualizacion`) INCLUDE (`Frecuencia_Absoluta`, `Frecuencia_Acumulada`)
+   - Tipo: NONCLUSTERED
+   - Utilidad: Análisis temporal y validación de datos
+
+## Objetos relacionados
+
+### Tablas fuente
+- `[dbo].[Tabla_de_Hechos_Comportamiento]` - Fuente de datos de duración de sesiones
+
+### Vistas
+- `[Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaDuracionSesionHoras]` - Vista para reporting
+- `[Analisis_Cuantitativo_Juegos].[VW_DistribucionSesiones]` - Vista consolidada de patrones de juego
+
+### Procedimientos almacenados
+- `[dbo].[sp_ActualizarTablasFrecuencia]` - SP para actualizar todas las tablas de frecuencia
+- `[dbo].[sp_CalcularFrecuenciasDuracion]` - SP específico para duración de sesiones
+
+## Seguridad y clasificación
+
+### Clasificación de datos
+- **Nivel de sensibilidad**: BAJO
+- **Tipo de datos**: Estadísticas agregadas de comportamiento
+- **Retención**: 12 meses (rotación anual de datos históricos)
+
+### Permisos requeridos
+- SELECT: roles `data_analyst`, `bi_reader`, `marketing_analyst`
+- INSERT/UPDATE: rol `etl_runner`
+- TRUNCATE/DELETE: rol `db_owner` (operación restringida)
+
+### Notas de seguridad
+- No contiene datos personales identificables (PII)
+- Los rangos y agregaciones protegen la privacidad individual
+- Mantener auditoría de actualizaciones masivas
+
+## DDL y notas de implementación
+```sql
+CREATE TABLE [Analisis_Cuantitativo_Juegos].[Tabla_Frecuencia_DuracionSesionHoras] (
+    ID_Rango INT NOT NULL,
+    Limite_Inferior DECIMAL(5,2) NOT NULL,
+    Limite_Superior DECIMAL(5,2) NOT NULL,
+    Frecuencia_Absoluta INT NOT NULL DEFAULT 0,
+    Frecuencia_Relativa DECIMAL(5,4) NOT NULL DEFAULT 0,
+    Frecuencia_Acumulada INT NOT NULL DEFAULT 0,
+    Porcentaje_Acumulado DECIMAL(5,4) NOT NULL DEFAULT 0,
+    Fecha_Actualizacion DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT PK_Tabla_Frecuencia_DuracionSesionHoras PRIMARY KEY CLUSTERED (ID_Rango),
+    CONSTRAINT CHK_Limites_Validos CHECK (Limite_Superior > Limite_Inferior),
+    CONSTRAINT CHK_Frecuencias_Positivas CHECK (Frecuencia_Absoluta >= 0),
+    CONSTRAINT CHK_Porcentajes_Validos CHECK (Frecuencia_Relativa BETWEEN 0 AND 1)
+);
+```
+
+### Notas de implementación
+- Los rangos de duración sugeridos son de 0.5 horas para mejor interpretabilidad
+- Mantener consistencia en el cálculo de frecuencias acumuladas
+- Validar que la suma de frecuencias relativas sea 1 (100%)
+
+## Resumen
 Tabla de frecuencias para la variable "Duración de sesión (horas)". Guarda clases (intervalos), marcas de clase y las medidas derivadas necesarias para análisis descriptivo (frecuencia absoluta, acumulada, relativa y porcentual). Está pensada para poder recalcularse periódicamente desde la fuente (p.ej. `dbo.Tabla_Madre` o `Tabla_de_Hechos_Comportamiento`).
 
 Esta ficha incluye:
