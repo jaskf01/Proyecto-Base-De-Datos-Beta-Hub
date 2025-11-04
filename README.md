@@ -2,6 +2,7 @@
 Proyecto Base de Datos del curso BetaHub del período agosto-noviembre 2025. Con un enfoque en el impacto de los videojuegos hacia el bienestar psicológico, este proyecto ha sido creado, generando conciencia y formas útiles de replicarlo con datos reales.
 
 
+## INSTRUCCIONES.MD
 # Nombre de la Base de Datos: Comportamiento Online
 
 ## Objetivo
@@ -320,7 +321,69 @@ WITH (
 **Resultado:**  
 Base de datos importada correctamente con todas sus columnas y filas.
 
+## Etapa 4: Creación de procedimientos, vistas y triggers
 
+**Acción realizada:**  
+Se agregaron procedimientos almacenados para actualizar medidas estadísticas, un trigger para sincronizar la **Tabla_Madre** con tablas normalizadas (dimensión y hechos), y vistas para consulta y reporte.
+
+### 1) Procedimientos
+- `sp_ActualizarMedidasDispersion (@FilasAfectadas INT OUTPUT)`  
+  Actualiza `VARIANZA` y `DESVIACIÓN_ESTÁNDAR` en `[Analisis_Cuantitativo_Juegos].[Medidas_Dispersion_Juegos]` a partir de:
+  - `[dbo].[Tabla_De_Dimension_Jugador]` (Edad)
+  - `[dbo].[Tabla_De_Hechos_Comportamiento]` (Sesiones_por_Semana, Duración_de_Sesión_en_Horas_en_Promedio)
+
+- `sp_ActualizarMedidasTendenciaCentral (@FilasAfectadas INT OUTPUT)`  
+  Actualiza `RANGO`, `MEDIA`, `MEDIANA`, `MODA` en `[Analisis_Cuantitativo_Juegos].[Medidas_Tendencia_Central_Juegos]`.  
+  La **moda** se calcula de forma segura (TOP 1 por mayor frecuencia, desempate ascendente).
+
+- `sp_ActualizarTablasFrecuencia (@FilasAfectadas INT OUTPUT, @TablaTipo VARCHAR(50))`  
+  Recalcula las tablas de frecuencia según `@TablaTipo` ∈ {`Edad`, `SesionesPorSemana`, `DuracionSesionHoras`}, actualizando:  
+  `Frecuencia`, `Frecuencia_Acumulada`, `Frecuencia_Relativa`, `Frecuencia_Relativa_Acumulada`, `Frecuencia_Porcentual`, `Frecuencia_Porcentual_Acumulada`.
+
+### 2) Trigger
+- `TRG_SincronizarHijasDesdeMadre` (AFTER INSERT, UPDATE en `[dbo].[Tabla_Madre]`)  
+  - **Prohíbe** cambios en `ID_de_Jugador` (clave).  
+  - Sincroniza:
+    - `[dbo].[Tabla_De_Dimension_Jugador]` (MERGE)
+    - `[dbo].[Tabla_De_Dimension_Juego]` (MERGE)
+    - `[dbo].[Tabla_De_Hechos_Comportamiento]` (INSERT y UPDATE por join en `ID_de_Jugador`)
+
+> Nota: Si la tabla de hechos no tiene PK, un UPDATE podría afectar varias filas por jugador; el script conserva el comportamiento que describiste.
+
+### 3) Vistas (para reporteo)
+- `[Analisis_Cuantitativo_Juegos].[VW_MedidasTendenciaCentral_Dispersion]`  
+  Une tendencia central + dispersión por variable.
+
+- `[Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaDuracionSesionHoras]`  
+  Intervalos seleccionados: 2,4,6,8,10,12,14,16,17.
+
+- `[Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaEdad]`  
+  Todas las filas de la tabla de frecuencia de Edad.
+
+- `[Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaSesionesPorSemana]`  
+  Todas las filas de la tabla de frecuencia de Sesiones por semana.
+
+**Resultado esperado:**  
+Quedan disponibles SPs para recalcular métricas, un trigger de sincronización de tablas normalizadas y vistas para consulta y dashboards.
+
+**Ejecución rápida (ejemplos):**
+```sql
+-- Dispersión
+DECLARE @n INT; EXEC dbo.sp_ActualizarMedidasDispersion @FilasAfectadas=@n OUTPUT; SELECT @n AS filas_dispersion;
+
+-- Tendencia central
+DECLARE @m INT; EXEC dbo.sp_ActualizarMedidasTendenciaCentral @FilasAfectadas=@m OUTPUT; SELECT @m AS filas_tend_central;
+
+-- Frecuencia (elige una)
+DECLARE @k INT; EXEC dbo.sp_ActualizarTablasFrecuencia @FilasAfectadas=@k OUTPUT, @TablaTipo='Edad';                 SELECT @k AS filas_freq;
+DECLARE @k INT; EXEC dbo.sp_ActualizarTablasFrecuencia @FilasAfectadas=@k OUTPUT, @TablaTipo='SesionesPorSemana';  SELECT @k AS filas_freq;
+DECLARE @k INT; EXEC dbo.sp_ActualizarTablasFrecuencia @FilasAfectadas=@k OUTPUT, @TablaTipo='DuracionSesionHoras';SELECT @k AS filas_freq;
+
+-- Vistas
+SELECT TOP 10 * FROM [Analisis_Cuantitativo_Juegos].[VW_MedidasTendenciaCentral_Dispersion];
+SELECT TOP 10 * FROM [Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaEdad];
+SELECT TOP 10 * FROM [Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaSesionesPorSemana];
+SELECT TOP 10 * FROM [Analisis_Cuantitativo_Juegos].[VW_TablaFrecuenciaDuracionSesionHoras];
 
 ## Etapa 5: Consultas
 ```sql
